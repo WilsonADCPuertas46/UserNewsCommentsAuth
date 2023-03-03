@@ -1,11 +1,12 @@
-from django.conf import settings
+#from django.conf import settings
 
 from rest_framework import  status, generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from rest_framework_simplejwt.backends import TokenBackend
+#from rest_framework_simplejwt.backends import TokenBackend
 
+from authApp.utils import get_valid_token_data
 from authApp.models import New
 from authApp.serializers import NewSerializer
 from authApp.permissions import IsOwner
@@ -17,9 +18,7 @@ class NewsCreateView(generics.CreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data(request)
 
         if valid_data['user_id'] != request.data['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}
@@ -45,20 +44,20 @@ class NewsDetailView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
     
+
 class NewsUpdateView(generics.UpdateAPIView):
     queryset = New.objects.all()
     serializer_class = NewSerializer
     permission_classes = (IsAuthenticated, IsOwner)
 
     def put(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data(request)
 
         if valid_data['user_id'] != kwargs['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}
             return Response(stringResponse, status=status.HTTP_401_UNAUTHORIZED)
         return super().put(request, *args, **kwargs)
+    
     
 class NewsDeleteView(generics.DestroyAPIView):
     queryset = New.objects.all()
@@ -66,9 +65,7 @@ class NewsDeleteView(generics.DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwner)
 
     def delete(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data()
 
         if valid_data['user_id'] != kwargs['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}

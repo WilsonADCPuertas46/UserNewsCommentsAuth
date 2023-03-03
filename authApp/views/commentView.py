@@ -1,14 +1,11 @@
-from django.conf import settings
-
 from rest_framework import status,generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from rest_framework_simplejwt.backends import TokenBackend
-
 from authApp.models import Comment
 from authApp.serializers import CommentSerializer
 from authApp.permissions import IsOwner
+from authApp.utils import get_valid_token_data
 
 
 class CommentCreateView(generics.CreateAPIView):
@@ -17,9 +14,7 @@ class CommentCreateView(generics.CreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data(request)
 
         if valid_data['user_id'] != request.data['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}
@@ -42,9 +37,7 @@ class CommentUpdateView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated, IsOwner)
 
     def put(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data(request)
 
         if valid_data['user_id'] != kwargs['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}
@@ -59,9 +52,7 @@ class CommentDeleteView(generics.DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwner)
 
     def delete(self, request, *args, **kwargs):
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token, verify=False)
+        valid_data = get_valid_token_data(request)
 
         if valid_data['user_id'] != kwargs['owner']:
             stringResponse = {'detail': 'Unauthorized Request'}

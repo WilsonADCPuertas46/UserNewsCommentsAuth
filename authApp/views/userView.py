@@ -1,12 +1,10 @@
-from django.conf import settings
-
 from rest_framework import views, status, generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.backends import TokenBackend
 
+from authApp.utils import get_valid_token_data
 from authApp.models import User
 from authApp.serializers import UserSerializer
 
@@ -39,10 +37,7 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
-
-        token = request.META.get('HTTP_AUTHORIZATION')[7:]
-        tokenBackend = TokenBackend(algorithm=settings.SIMPLE_JWT['ALGORITHM'])
-        valid_data = tokenBackend.decode(token,verify=False)
+        valid_data =  get_valid_token_data(request)
         
         if valid_data['user_id'] != kwargs['pk']:
             stringResponse = {'detail':'Unauthorized Request'}
